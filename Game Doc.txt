@@ -1,0 +1,25 @@
+Player - moves left and right at a normal speed
+	moves up and down at a slower speed
+	bullets are faster but stay at constant speed
+	walk anim faces right when going up and down
+	walk anim can be flipped to go left
+	player dies upon enemy bullet contact
+	player dies upon wall contact
+
+Cyclons - standing still, rotating eyes
+	walking forward, eye stationary
+	walking back, no eyes
+	bullets start slow but increase speed as level progresses
+	
+
+Mr. Otto - A smiling, bouncing ball of death
+
+Walls - Kills enemies and player on contact
+	Mr. otto goes right through them
+
+Bullets - constant speed for player
+	speed increase for enemies
+
+Stages - Have 7 basic designs that are randomized
+	number of enemies increase as levels increase
+	
