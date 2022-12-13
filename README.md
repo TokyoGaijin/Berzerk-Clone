@@ -16,4 +16,9 @@ It IS free to download.
 It IS free to edit.
 You may create your own branches if you wish.
 
-Feel free to take a look. The master file is berzerk4py.cs
+Feel free to take a look. The master file is berzerk4py.py
+You can execute the working program from DOS or BASH prompt with python (or python3) berzerk4py.py
+
+There is a help screen that will teach you the simple play controls.
+
+I will add a Wiki in the future for this project.
