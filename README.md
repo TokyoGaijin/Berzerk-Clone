@@ -1,29 +1,19 @@
 # README #
 
-This README would normally document whatever steps are necessary to get your application up and running.
+This is an open source code for my Berzerk clone of the Atari 2600 version.
 
-### What is this repository for? ###
+Includes arcade sound effects and hand-drawn graphics by me.
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+The game is BUGGY!
 
-### How do I get set up? ###
+As it is right now, the game runs but slows down considerably.
+This version attempts to use threading to increase performance, but to no avail. It slows down to a crawl almost immediately.
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+The game, itself, was copyrighted back in the 1970s, so this is considered a FAN PROJECT.
 
-### Contribution guidelines ###
+It is NOT for commercial use.
+It IS free to download.
+It IS free to edit.
+You may create your own branches if you wish.
 
-* Writing tests
-* Code review
-* Other guidelines
-
-### Who do I talk to? ###
-
-* Repo owner or admin
-* Other community or team contact
+Feel free to take a look. The master file is berzerk4py.cs
