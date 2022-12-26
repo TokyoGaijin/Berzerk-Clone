@@ -13,6 +13,13 @@ import deathscreen
 from collections import namedtuple
 import threading
 import time
+from enum import Enum
+
+class GameState(Enum):
+    TITLE = 0
+    STORY = 1
+    IN_PLAY = 2
+    GAME_OVER = 3
 
 
 #The main game file
@@ -476,119 +483,6 @@ clock = pygame.time.Clock()
 waittime = 0
 move_direction = ""
 
-def drawlives():
-    pass
-
-
-def startscreen():
-    ontitle = True
-
-    while ontitle:
-        threadfunc(clock.tick(FPS))
-
-        WINDOW.blit(TITLEIMAGE, (0, 0))
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                ontitle = False
-
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_HOME]:
-            storyscreen()
-        if keys[pygame.K_ESCAPE]:
-            pygame.display.quit()
-            pygame.quit()
-
-
-        pygame.display.update()
-        WINDOW.fill(cs.black["pygame"])
-
-
-def gameover():
-    gameover = True
-
-    display_font = pygame.font.Font(os.path.join("fonts", "arcade_font.ttf"), 20)
-    show_score = display_font.render(f"Your Score: {player.score}", 1, cs.white["pygame"])
-
-    while gameover:
-        clock.tick(FPS)
-        clearlists()
-
-        WINDOW.blit(DEATH, (0, 0))
-        WINDOW.blit(show_score, (346, 400))
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                gameover = False
-
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_ESCAPE]:
-            pygame.display.quit()
-            pygame.quit()
-        if keys[pygame.K_RETURN]:
-            player.score = 0
-            startscreen()
-
-        pygame.display.update()
-        threadfunc(WINDOW.fill(cs.black["pygame"]))
-
-
-
-
-def storyscreen():
-    onstory = True
-    global currentLevel
-
-    while onstory:
-        clock.tick(FPS)
-
-        WINDOW.blit(STORY, (0,0))
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                ontitle = False
-
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_RETURN]:
-            player.posX, player.posY, player.hitbox.x, player.hitbox.y = 100, 100, 100, 100
-            currentLevel = random.randrange(1, len(ROOMPATTERNS) - 2)
-            player.alive = True
-            maingame()
-        if keys[pygame.K_ESCAPE]:
-            pygame.display.quit()
-            pygame.quit()
-
-
-        pygame.display.update()
-        WINDOW.fill(cs.black["pygame"])
-
-
-def pause():
-    paused = True
-    global currentLevel
-
-    while paused:
-        clock.tick(FPS)
-
-        WINDOW.blit(PAUSE, (0,0))
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                ontitle = False
-
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_PAUSE]:
-            currentLevel = random.randrange(1, len(ROOMPATTERNS) - 2)
-            player.alive = True
-            clearlists()
-            player.posX, player.posY = 100, 100
-            maingame()
-        if keys[pygame.K_ESCAPE]:
-            pygame.display.quit()
-            pygame.quit()
-
-        pygame.display.update()
-        WINDOW.fill(cs.black["pygame"])
 
 
 for i in range(0, len(enemylist)):
@@ -624,7 +518,8 @@ def levelup():
 
 def maingame():
     global inplay, cooldown
-    global whatkilledit, move_direction
+    global whatkilledit, move_direction, currentLevel
+    current_state = GameState.TITLE
 
     
 
@@ -669,8 +564,6 @@ def maingame():
         threadfunc(drawlevel(currentLevel))
 
 
-
-
         for bullet in bulletlist:
             threadfunc(bullet.draw(WINDOW))
             threadfunc(bullet.update(bullet.direction))
@@ -685,61 +578,21 @@ def maingame():
         if not player.alive:
             player.die_anim(whatkilledit)
             if not player.deathscene:
-                gameover()
+                current_state = GameState.GAME_OVER
         else:
             player.draw(player.currentdirection, vertical=player.orientation, moving=player.moving,
                         firing=player.isfiring)
 
 
 
+    keys = pygame.key.get_pressed()
 
     while inplay:
-        clock.tick(FPS)
-        player.controller()
-        threadfunc(redrawelements())
-        threadfunc(gui.draw(f"SCORE: {player.score}"))
 
-         #difficulty management
-        ##increase enemy bullet speed
-        movespeed = 2
-        if player.score > 5000:
-            for enemy in enemylist:
-                enemy.fire_speed = 8
-                movespeed = 3
-        if player.score > 10000:  #max level
-            for enemy in enemylist:
-                enemy.fire_speed = 10
-
-
-    
-
-
-        # enemy movement
-        def checkWalk(element):
-            # To be used within a FOR loop within a list to check for walking eligibility
-            if player.posX < element.posX and player.posY == element.posY and player.posY <= element.posY + element.height:
-                element.iswalking = True
-                element.posX -= movespeed
-                element.hitbox.x -= movespeed
-                element.move()
-            elif player.posX > element.posX and player.posY == element.posY and player.posY <= element.posY + element.height:
-                element.iswalking = True
-                element.posX += movespeed
-                element.hitbox.x += movespeed
-                element.move()
-            elif player.posY < element.posY and player.posX == element.posX and player.posX <= element.posX + element.width:
-                element.iswalking = True
-                element.posY -= movespeed
-                element.hitbox.y -= movespeed
-            elif player.posY > element.posY and player.posX == element.posX and player.posX <= element.posX + element.width:
-                element.iswalking = True
-                element.posY += movespeed
-                element.hitbox.y += movespeed
-                element.move()
-            else:
-                element.iswalking = False
-
-
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_ESCAPE]:
+            pygame.display.quit()
+            pygame.quit()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -754,234 +607,322 @@ def maingame():
                 player.moving = False
             if event.type == pygame.KEYUP and event.key == pygame.K_SPACE:
                 player.isfiring = False
-                cooldown = 30
+
+
+        if current_state == GameState.TITLE:
+            WINDOW.blit(TITLEIMAGE, (0, 0))
+
+        
+            if keys[pygame.K_HOME]:
+                current_state = GameState.STORY
+       
+
+
+            pygame.display.update()
+            WINDOW.fill(cs.black["pygame"])
 
 
 
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_ESCAPE]:
-            pygame.display.quit()
-            pygame.quit()
-        if keys[pygame.K_PAUSE]:
-            pause()
+
+        if current_state == GameState.GAME_OVER:
+        
+            display_font = pygame.font.Font(os.path.join("fonts", "arcade_font.ttf"), 20)
+            show_score = display_font.render(f"Your Score: {player.score}", 1, cs.white["pygame"])
+
+        
+        
+            WINDOW.blit(DEATH, (0, 0))
+            WINDOW.blit(show_score, (346, 400))
+
+   
+            if keys[pygame.K_RETURN]:
+                player.score = 0
+                curreent_state = GameState.TITLE
+
+            pygame.display.update()
+            threadfunc(WINDOW.fill(cs.black["pygame"]))
 
 
-        if player.posX > roomsizeX or player.posX < -45 or player.posY > roomsizeY - 200 or player.posY < -45:
-            getnextroom()
+        if current_state == GameState.STORY:
+   
+            WINDOW.blit(STORY, (0,0))
+
+                  
+            if keys[pygame.K_RETURN]:
+                player.posX, player.posY, player.hitbox.x, player.hitbox.y = 100, 100, 100, 100
+                currentLevel = random.randrange(1, len(ROOMPATTERNS) - 2)
+                player.alive = True
+                current_state = GameState.IN_PLAY
 
 
-        # all collisions
-        for bullet in bulletlist[:]:
-            if bullet.x > roomsizeX or bullet.x < 0 - bullet.w:
-                bulletlist.remove(bullet)
-            if bullet.y > roomsizeY  or bullet.y < 0 - bullet.h:
-                bulletlist.remove(bullet)
-
-        for bullet in enemybulletlist[:]:
-            if bullet.x > roomsizeX or bullet.x < 0 - bullet.w:
-                enemybulletlist.remove(bullet)
-            if bullet.y > roomsizeY  or bullet.y < 0 - bullet.h:
-                enemybulletlist.remove(bullet)
+            pygame.display.update()
+            WINDOW.fill(cs.black["pygame"])
 
 
 
-        for block in blocks[:]:
-            if block.hitbox.colliderect(player.hitbox):
-                if player.alive:
-                    player.die("wall")
-                    player.alive = False
+  
+        if current_state == GameState.IN_PLAY:
+            clock.tick(FPS)
+            player.controller()
+            threadfunc(redrawelements())
+            threadfunc(gui.draw(f"SCORE: {player.score}"))
+
+            #difficulty management
+            ##increase enemy bullet speed
+            movespeed = 2
+            if player.score > 5000:
+                for enemy in enemylist:
+                    enemy.fire_speed = 8
+                    movespeed = 3
+            if player.score > 10000:  #max level
+                for enemy in enemylist:
+                    enemy.fire_speed = 10
+
+
+    
+
+
+            # enemy movement
+            def checkWalk(element):
+                # To be used within a FOR loop within a list to check for walking eligibility
+                if player.posX < element.posX and player.posY == element.posY and player.posY <= element.posY + element.height:
+                    element.iswalking = True
+                    element.posX -= movespeed
+                    element.hitbox.x -= movespeed
+                    element.move()
+                elif player.posX > element.posX and player.posY == element.posY and player.posY <= element.posY + element.height:
+                    element.iswalking = True
+                    element.posX += movespeed
+                    element.hitbox.x += movespeed
+                    element.move()
+                elif player.posY < element.posY and player.posX == element.posX and player.posX <= element.posX + element.width:
+                    element.iswalking = True
+                    element.posY -= movespeed
+                    element.hitbox.y -= movespeed
+                elif player.posY > element.posY and player.posX == element.posX and player.posX <= element.posX + element.width:
+                    element.iswalking = True
+                    element.posY += movespeed
+                    element.hitbox.y += movespeed
+                    element.move()
+                else:
+                    element.iswalking = False
+
+
+            if player.posX > roomsizeX or player.posX < -45 or player.posY > roomsizeY - 200 or player.posY < -45:
+                getnextroom()
+
+
+            # all collisions
             for bullet in bulletlist[:]:
-                if bullet.hitbox.colliderect(block.hitbox):
+                if bullet.x > roomsizeX or bullet.x < 0 - bullet.w:
                     bulletlist.remove(bullet)
+                if bullet.y > roomsizeY  or bullet.y < 0 - bullet.h:
+                    bulletlist.remove(bullet)
+
             for bullet in enemybulletlist[:]:
-                if bullet.hitbox.colliderect(block.hitbox):
+                if bullet.x > roomsizeX or bullet.x < 0 - bullet.w:
+                    enemybulletlist.remove(bullet)
+                if bullet.y > roomsizeY  or bullet.y < 0 - bullet.h:
                     enemybulletlist.remove(bullet)
 
-        try:
-            for bullet in enemybulletlist[:]:
-                if bullet.hitbox.colliderect(player.hitbox):
+
+
+            for block in blocks[:]:
+                if block.hitbox.colliderect(player.hitbox):
                     if player.alive:
-                        player.die("shot")
+                        player.die("wall")
                         player.alive = False
+                for bullet in bulletlist[:]:
+                    if bullet.hitbox.colliderect(block.hitbox):
+                        bulletlist.remove(bullet)
+                for bullet in enemybulletlist[:]:
+                    if bullet.hitbox.colliderect(block.hitbox):
                         enemybulletlist.remove(bullet)
-        except ValueError:
-            continue
+
+            try:
+                for bullet in enemybulletlist[:]:
+                    if bullet.hitbox.colliderect(player.hitbox):
+                        if player.alive:
+                            player.die("shot")
+                            player.alive = False
+                            enemybulletlist.remove(bullet)
+            except ValueError:
+                continue
 
 
 
-        for bullet in bulletlist:
-            for enemy in enemylist[:]:
-                if bullet.hitbox.colliderect(enemy.hitbox):
-                    enemy.blowup()
-                    deathsound.play()
-                    bulletlist.remove(bullet)
-                    enemy.isalive = False
-                    scorelist.append(ScoreDisplay(WINDOW, enemy.posX, enemy.posY, 14, FPS))
-                if not enemy.isalive:
-                    explosionlist.append(boom.Explosion(WINDOW, enemy.posX, enemy.posY))
-                    enemylist.remove(enemy)
-                    player.score += killpoints
-                if len(enemylist) <= 0:
-                    player.score += roomclearpoints
-
-
-        for bullet in enemybulletlist:
-            for enemy in enemylist[:]:
-                if bullet.hitbox.colliderect(enemy.hitbox):
-                    enemy.blowup()
-                    deathsound.play()
-                    enemybulletlist.remove(bullet)
-                    enemy.isalive = False
-                    scorelist.append(ScoreDisplay(WINDOW, enemy.posX, enemy.posY, 14, FPS))
-                if not enemy.isalive:
-                    explosionlist.append(boom.Explosion(WINDOW, enemy.posX, enemy.posY))
-                    enemylist.remove(enemy)
-                    player.score += killpoints
-                if len(enemylist) <= 0:
-                    player.score += roomclearpoints
-
-
-        for block in blocks[:]:
-            for enemy in enemylist[:]:
-                if block.hitbox.colliderect(enemy.hitbox):
-                    if enemy.isalive:
-                        enemy.isalive = False
+            for bullet in bulletlist:
+                for enemy in enemylist[:]:
+                    if bullet.hitbox.colliderect(enemy.hitbox):
                         enemy.blowup()
                         deathsound.play()
+                        bulletlist.remove(bullet)
+                        enemy.isalive = False
                         scorelist.append(ScoreDisplay(WINDOW, enemy.posX, enemy.posY, 14, FPS))
                     if not enemy.isalive:
                         explosionlist.append(boom.Explosion(WINDOW, enemy.posX, enemy.posY))
                         enemylist.remove(enemy)
                         player.score += killpoints
-                if len(enemylist) <= 0:
-                    player.score += roomclearpoints
+                    if len(enemylist) <= 0:
+                        player.score += roomclearpoints
 
-        for enemy in enemylist[:]:
-            direction = ""
-            if player.hitbox.colliderect(enemy.hitbox):
-                player.die("shot")
-                player.alive = False
 
-            #Enemy moves only within "line of sight"
-            if player.score >= 2500 and enemy.color == enemycolors[2]:
-                checkWalk(enemy)
-            #Enemy chases player when player is moving
-            if (player.score >= 4000 and player.moving and enemy.color == enemycolors[1]) or (player.score >= 10000 and enemy.color == enemycolors[2]):
-                if player.posX < enemy.posX or player.posY == enemy.posY and player.posY <= enemy.posY + enemy.height:
-                    enemy.iswalking = True
-                    enemy.posX -= movespeed
-                    enemy.hitbox.x -= movespeed
-                    enemy.move()
-                elif player.posX > enemy.posX or player.posY == enemy.posY and player.posY <= enemy.posY + enemy.height:
-                    enemy.iswalking = True
-                    enemy.posX += movespeed
-                    enemy.hitbox.x += movespeed
-                    enemy.move()
-                elif player.posY < enemy.posY and player.posX == enemy.posX or player.posX <= enemy.posX + enemy.width:
-                    enemy.iswalking = True
-                    enemy.posY -= movespeed
-                    enemy.hitbox.y -= movespeed
-                    enemy.move()
-                elif player.posY > enemy.posY and player.posX == enemy.posX or player.posX <= enemy.posX + enemy.width:
-                    enemy.iswalking = True
-                    enemy.posY += movespeed
-                    enemy.hitbox.y += movespeed
-                    enemy.move()
-                else:
-                    enemy.iswalking = False
-            #Enemy chases player, whether or not player is moving
-            if player.score >= 10000 and enemy.color == enemycolors[1]:
-                if player.posX < enemy.posX or player.posY == enemy.posY and player.posY <= enemy.posY + enemy.height:
-                    enemy.iswalking = True
-                    enemy.posX -= movespeed
-                    enemy.hitbox.x -= movespeed
-                    enemy.move()
-                elif player.posX > enemy.posX or player.posY == enemy.posY and player.posY <= enemy.posY + enemy.height:
-                    enemy.iswalking = True
-                    enemy.posX += movespeed
-                    enemy.hitbox.x += movespeed
-                    enemy.move()
-                elif player.posY < enemy.posY and player.posX == enemy.posX or player.posX <= enemy.posX + enemy.width:
-                    enemy.iswalking = True
-                    enemy.posY -= movespeed
-                    enemy.hitbox.y -= movespeed
-                    enemy.move()
-                elif player.posY > enemy.posY and player.posX == enemy.posX or player.posX <= enemy.posX + enemy.width:
-                    enemy.iswalking = True
-                    enemy.posY += movespeed
-                    enemy.hitbox.y += movespeed
-                    enemy.move()
-                else:
-                    enemy.iswalking = False
+            for bullet in enemybulletlist:
+                for enemy in enemylist[:]:
+                    if bullet.hitbox.colliderect(enemy.hitbox):
+                        enemy.blowup()
+                        deathsound.play()
+                        enemybulletlist.remove(bullet)
+                        enemy.isalive = False
+                        scorelist.append(ScoreDisplay(WINDOW, enemy.posX, enemy.posY, 14, FPS))
+                    if not enemy.isalive:
+                        explosionlist.append(boom.Explosion(WINDOW, enemy.posX, enemy.posY))
+                        enemylist.remove(enemy)
+                        player.score += killpoints
+                    if len(enemylist) <= 0:
+                        player.score += roomclearpoints
+
+
+            for block in blocks[:]:
+                for enemy in enemylist[:]:
+                    if block.hitbox.colliderect(enemy.hitbox):
+                        if enemy.isalive:
+                            enemy.isalive = False
+                            enemy.blowup()
+                            deathsound.play()
+                            scorelist.append(ScoreDisplay(WINDOW, enemy.posX, enemy.posY, 14, FPS))
+                        if not enemy.isalive:
+                            explosionlist.append(boom.Explosion(WINDOW, enemy.posX, enemy.posY))
+                            enemylist.remove(enemy)
+                            player.score += killpoints
+                    if len(enemylist) <= 0:
+                        player.score += roomclearpoints
+
+            for enemy in enemylist[:]:
+                direction = ""
+                if player.hitbox.colliderect(enemy.hitbox):
+                    player.die("shot")
+                    player.alive = False
+
+                #Enemy moves only within "line of sight"
+                if player.score >= 2500 and enemy.color == enemycolors[2]:
+                    checkWalk(enemy)
+                #Enemy chases player when player is moving
+                if (player.score >= 4000 and player.moving and enemy.color == enemycolors[1]) or (player.score >= 10000 and enemy.color == enemycolors[2]):
+                    if player.posX < enemy.posX or player.posY == enemy.posY and player.posY <= enemy.posY + enemy.height:
+                        enemy.iswalking = True
+                        enemy.posX -= movespeed
+                        enemy.hitbox.x -= movespeed
+                        enemy.move()
+                    elif player.posX > enemy.posX or player.posY == enemy.posY and player.posY <= enemy.posY + enemy.height:
+                        enemy.iswalking = True
+                        enemy.posX += movespeed
+                        enemy.hitbox.x += movespeed
+                        enemy.move()
+                    elif player.posY < enemy.posY and player.posX == enemy.posX or player.posX <= enemy.posX + enemy.width:
+                        enemy.iswalking = True
+                        enemy.posY -= movespeed
+                        enemy.hitbox.y -= movespeed
+                        enemy.move()
+                    elif player.posY > enemy.posY and player.posX == enemy.posX or player.posX <= enemy.posX + enemy.width:
+                        enemy.iswalking = True
+                        enemy.posY += movespeed
+                        enemy.hitbox.y += movespeed
+                        enemy.move()
+                    else:
+                        enemy.iswalking = False
+                #Enemy chases player, whether or not player is moving
+                if player.score >= 10000 and enemy.color == enemycolors[1]:
+                    if player.posX < enemy.posX or player.posY == enemy.posY and player.posY <= enemy.posY + enemy.height:
+                        enemy.iswalking = True
+                        enemy.posX -= movespeed
+                        enemy.hitbox.x -= movespeed
+                        enemy.move()
+                    elif player.posX > enemy.posX or player.posY == enemy.posY and player.posY <= enemy.posY + enemy.height:
+                        enemy.iswalking = True
+                        enemy.posX += movespeed
+                        enemy.hitbox.x += movespeed
+                        enemy.move()
+                    elif player.posY < enemy.posY and player.posX == enemy.posX or player.posX <= enemy.posX + enemy.width:
+                        enemy.iswalking = True
+                        enemy.posY -= movespeed
+                        enemy.hitbox.y -= movespeed
+                        enemy.move()
+                    elif player.posY > enemy.posY and player.posX == enemy.posX or player.posX <= enemy.posX + enemy.width:
+                        enemy.iswalking = True
+                        enemy.posY += movespeed
+                        enemy.hitbox.y += movespeed
+                        enemy.move()
+                    else:
+                        enemy.iswalking = False
         
 
 
-            #Firing at the player
-            if len(enemybulletlist) < 5:
-                #left view
-                if player.posX < enemy.posX and player.posY == enemy.posY and player.posY <= enemy.posY + enemy.height:
-                    direction = "left"
-                #right view
-                elif player.posX > enemy.posX and player.posY == enemy.posY and player.posY <= enemy.posY + enemy.height:
-                    direction = "right"
-                #above
-                elif player.posY < enemy.posY and player.posX == enemy.posX and player.posX <= enemy.posX + enemy.width:
-                    direction = "up"
-                #below
-                elif player.posY > enemy.posY and player.posX == enemy.posX and player.posX <= enemy.posX + enemy.width:
-                    direction = "down"
-                else:
-                    enemy.iswalking = False
-                enemy.fire(direction)
+                #Firing at the player
+                if len(enemybulletlist) < 5:
+                    #left view
+                    if player.posX < enemy.posX and player.posY == enemy.posY and player.posY <= enemy.posY + enemy.height:
+                        direction = "left"
+                    #right view
+                    elif player.posX > enemy.posX and player.posY == enemy.posY and player.posY <= enemy.posY + enemy.height:
+                        direction = "right"
+                    #above
+                    elif player.posY < enemy.posY and player.posX == enemy.posX and player.posX <= enemy.posX + enemy.width:
+                        direction = "up"
+                    #below
+                    elif player.posY > enemy.posY and player.posX == enemy.posX and player.posX <= enemy.posX + enemy.width:
+                        direction = "down"
+                    else:
+                        enemy.iswalking = False
+                    enemy.fire(direction)
 
 
 
-        if len(enemylist) <= 0:
-            bonusDisplay.draw(f"ROOM CLEAR BONUS: {roomclearpoints}")
+            if len(enemylist) <= 0:
+                bonusDisplay.draw(f"ROOM CLEAR BONUS: {roomclearpoints}")
 
 
-        for explosions in explosionlist:
-            explosions.blowup()
-            if not explosions.isvisible:
-                explosionlist.remove(explosions)
+            for explosions in explosionlist:
+                explosions.blowup()
+                if not explosions.isvisible:
+                    explosionlist.remove(explosions)
 
 
-        for score in scorelist[:]:
-            score.draw(f"{killpoints}")
-            if score.timer == 0:
-                scorelist.remove(score)
+            for score in scorelist[:]:
+                score.draw(f"{killpoints}")
+                if score.timer == 0:
+                    scorelist.remove(score)
 
 
-        for bullet in enemybulletlist:
-            bullet.update(direction)
+            for bullet in enemybulletlist:
+                bullet.update(direction)
 
-        #If no more enemies on the screen,
-        #clear the enemy bullet list
-        if len(enemylist) == 0:
-            for bullet in enemybulletlist[:]:
-                enemybulletlist.remove(bullet)
+            #If no more enemies on the screen,
+            #clear the enemy bullet list
+            if len(enemylist) == 0:
+                for bullet in enemybulletlist[:]:
+                    enemybulletlist.remove(bullet)
 
-        try:
-            for bullet in bulletlist:
-                for e_bullet in enemybulletlist[:]:
-                    if bullet.hitbox.colliderect(e_bullet.hitbox):
-                        bulletlist.remove(bullet)
-                        enemybulletlist.remove(e_bullet)
-        except ValueError:
-            continue
+            try:
+                for bullet in bulletlist:
+                    for e_bullet in enemybulletlist[:]:
+                        if bullet.hitbox.colliderect(e_bullet.hitbox):
+                            bulletlist.remove(bullet)
+                            enemybulletlist.remove(e_bullet)
+            except ValueError:
+                continue
 
-        for bullet in enemybulletlist:
-            if bullet.x < 0 or bullet.x > roomsizeX or bullet.y < 0 or bullet.y > roomsizeY:
-                enemybulletlist.remove(bullet)
+            for bullet in enemybulletlist:
+                if bullet.x < 0 or bullet.x > roomsizeX or bullet.y < 0 or bullet.y > roomsizeY:
+                    enemybulletlist.remove(bullet)
 
 
-        levelup()
+            levelup()
 
-        threadfunc(pygame.display.update())
-        WINDOW.fill(cs.black["pygame"])
+            threadfunc(pygame.display.update())
+            WINDOW.fill(cs.black["pygame"])
 
 
 
 if __name__ == "__main__":
-    startscreen()
-    # maingame()
+    maingame()
