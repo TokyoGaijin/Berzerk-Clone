@@ -1,5 +1,7 @@
 # README #
 
+# NOTE: THE MAIN GAME (berzerk4py.py) MAY NEED TO BE COMPLETELY REWRITTEN TO RESOLVE ISSUES!! #
+
 This is an open source code for my Berzerk clone of the Atari 2600 version.
 
 Includes arcade sound effects and hand-drawn graphics by me.
