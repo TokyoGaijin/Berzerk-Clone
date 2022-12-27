@@ -12,7 +12,7 @@ class Character:
         self.posY = posy
         self.alive = True
         self.horizspeed = 10
-        self.vertspeed = 4
+        self.vertspeed = 5
         self.walkcycle = [pygame.image.load(os.path.join("player", "player_run_right_1.png")),pygame.image.load(os.path.join("player", "player_run_right_1.png")),pygame.image.load(os.path.join("player", "player_run_right_1.png")),pygame.image.load(os.path.join("player", "player_run_right_1.png")),pygame.image.load(os.path.join("player", "player_run_right_2.png")),pygame.image.load(os.path.join("player", "player_run_right_2.png")),pygame.image.load(os.path.join("player", "player_run_right_2.png")),pygame.image.load(os.path.join("player", "player_run_right_2.png")),]
         self.stand_right = "player_stand_right.png"
         self.shoot_right = pygame.image.load(os.path.join("player", "player_shoot_right.png"))
@@ -94,101 +94,4 @@ class Character:
 
 
 
-class Player(Character):
-    def __init__(self, window, posx, posy):
-        super().__init__(window, posx, posy)
-        self.lives = 3
-        self.points = 0
 
-    def controller(self):
-
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            self.currentdirection = self.trigger[0]
-            self.firingdirection = self.trigger[0]
-            self.moving = True
-            self.isRight = False
-            self.isLeft = True
-            self.move(self.currentdirection)
-
-        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            self.currentdirection = self.trigger[2]
-            self.firingdirection = self.trigger[2]
-            self.moving = True
-            self.isRight = True
-            self.isLeft = False
-            self.move(self.currentdirection)
-
-        if keys[pygame.K_UP] or keys[pygame.K_w]:
-            self.firingdirection = self.trigger[1]
-            self.moving = True
-            self.move(self.trigger[1])
-
-        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-            self.firingdirection = self.trigger[3]
-            self.moving = True
-            self.move(self.trigger[3])
-
-        if keys[pygame.K_SPACE]:
-            self.isfiring = True
-            self.fire(self.firingdirection)
-
-
-
-
-
-#Testbed
-"""
-The below is absolutely imperitive in order to make the player move.
-Use below as a point of reference.
-"""
-w = 1000
-h = 800
-window = pygame.display.set_mode((w,h))
-pygame.display.set_caption("Testbed")
-
-inPlay = False
-
-player = Player(window, 50, 575)
-FPS = 30
-clock = pygame.time.Clock()
-
-while inPlay:
-    clock.tick(FPS)
-
-    player.draw(player.currentdirection, vertical=player.orientation, moving = player.moving, firing = player.isfiring)
-
-    player.controller()
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            inPlay = False
-        if event.type == pygame.KEYUP and (event.key == pygame.K_RIGHT or event.key == pygame.K_d):
-            player.moving = False
-        if event.type == pygame.KEYUP and (event.key == pygame.K_LEFT or event.key == pygame.K_a):
-            player.moving = False
-        if event.type == pygame.KEYUP and (event.key == pygame.K_UP or event.key == pygame.K_w):
-            player.moving = False
-        if event.type == pygame.KEYUP and (event.key == pygame.K_DOWN or event.key == pygame.K_s):
-            player.moving = False
-        if event.type == pygame.KEYUP and event.key == pygame.K_SPACE:
-            player.isfiring = False
-
-
-
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_ESCAPE]:
-        inPlay = False
-
-
-    if player.posX > w:
-        player.posX = 0
-    if player.posX < -45:
-        player.posX = w
-    if player.posY > h:
-        player.posY = -80
-    if player.posY < -80:
-        player.posY = h
-
-    pygame.display.update()
-    window.fill(cs.black["pygame"])

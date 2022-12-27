@@ -664,7 +664,7 @@ def maingame():
         if current_state == GameState.IN_PLAY:
             clock.tick(FPS)
             player.controller()
-            threadfunc(redrawelements())
+            threadfunc(redrawelements()) # changed to draw() -> goes in main gameloop
             threadfunc(gui.draw(f"SCORE: {player.score}"))
 
             #difficulty management
